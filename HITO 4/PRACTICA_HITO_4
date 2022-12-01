@@ -1,0 +1,267 @@
+create database EvaluacionHito4;
+
+use EvaluacionHito4;
+
+-- Pregunta 9
+
+create table departamento
+(
+        id_dep int primary key auto_increment not null,
+        nombre varchar(50) not null
+);
+
+insert into departamento(nombre) values
+('La Paz'),
+('Cochabamba');
+
+create table proyecto
+(
+    id_proyecto int primary key auto_increment not null,
+    nombre_Proy varchar (100) not null,
+    tipo_Proy varchar(30) not null
+);
+
+insert into proyecto(nombre_Proy, tipo_Proy) values
+('Proyecto1','Tipo1'),
+('Proyecto2','Tipo2');
+
+create or replace table provincia
+(
+    id_prov int primary key auto_increment not null,
+    nombre varchar(30),
+    id_dep int not null,
+    foreign key (id_dep) references departamento(id_dep)
+);
+
+insert into provincia(nombre, id_dep) values
+('Provincia1', 1),
+('Provincia2', 2);
+
+create or replace table persona
+(
+    id_per int primary key auto_increment not null,
+    nombre varchar(20) not null,
+    apellido varchar(50) not null,
+    fecha_nac date not null,
+    edad varchar(11) not null,
+    email varchar(50) not null,
+    id_dep int not null,
+    id_prov int not null,
+    sexo char(1) not null,
+    foreign key (id_dep) references departamento(id_dep),
+    foreign key (id_prov) references provincia(id_prov)
+);
+
+insert into persona(nombre, apellido, fecha_nac, edad, email, id_dep, id_prov, sexo) values
+('Persona1','Apellido1','2001-11-13','21','Persona1@gmail.com',1,1,'M'),
+('Persona2','Apellido2','2003-08-17','19','Persona2@gmail.com',2,2,'F');
+
+create or replace table detalle_proyecto
+(
+    id_dp int primary key auto_increment not null,
+    id_per int not null,
+    id_proy int not null,
+    foreign key (id_per) references persona(id_per),
+    foreign key (id_proy) references proyecto(id_proyecto)
+);
+
+insert into detalle_proyecto(id_per, id_proy) values
+(1,1),
+(2,2);
+
+drop table departamento;
+
+-- Pregunta 10
+
+create function fibonacci(numero int)
+
+RETURNS TEXT
+BEGIN
+    DECLARE A INTEGER DEFAULT 0;
+    DECLARE B INTEGER DEFAULT 1;
+    DECLARE aux INTEGER DEFAULT 0;
+    DECLARE count INTEGER DEFAULT 0;
+    DECLARE chain TEXT DEFAULT '';
+    SET chain =CONCAT(A,',',B);
+
+IF numero=1 THEN SET chain='0';
+ELSEIF numero=2 THEN SET chain='0,1';
+ELSEIF numero<=0 THEN SET chain='EL NUMERO DEBE SER MAYOR A CERO';
+ELSE
+            REPEAT
+
+            SET AUX=A+B;
+            SET chain = CONCAT(chain,',',AUX);
+            SET A=B;
+            SET B=AUX;
+            SET count=count+1;
+            UNTIL count = numero-2 END REPEAT;
+
+END IF;
+    RETURN chain;
+END;
+
+CREATE OR REPLACE FUNCTION CONTAR_FIBONANCI(SERIE TEXT)
+RETURNS INTEGER
+BEGIN
+    DECLARE SUMA INTEGER DEFAULT 0;
+    DECLARE CONT INTEGER DEFAULT 1;
+    DECLARE FINAL
+    INTEGER DEFAULT CHAR_LENGTH(SERIE);
+
+  REPEAT
+   SET SUMA =SUMA + SUBSTRING(SERIE,CONT,1);
+   SET CONT=CONT+2;
+  until  CONT> FINAL END REPEAT;
+
+    RETURN SUMA;
+end;
+
+SELECT fibonacci(10);
+SELECT CONTAR_FIBONANCI(fibonacci(7));
+
+-- Pregunta 11
+
+INSERT INTO departamento(nombre)
+VALUES('EL ALTO'),
+      ('SAN FIERRO');
+
+insert provincia(nombre, id_dep)
+Values ('Provinvcia3',3),
+ ('Provincia4',4);
+
+INSERT INTO persona(nombre, apellido, fecha_nac, edad, email, id_dep, id_prov, sexo)
+VALUES ('CARMEN','CALLE VARGAS','2002-10-10','21','CARMEN@GMAIL.COM',3,3,'F'),
+       ('GABRIELA','CASAS MENDOZA','2000-10-10','23','GABRIELA@GMAIL.COM',4,4,'F');
+
+insert into proyecto(nombre_Proy, tipo_Proy) values
+('Proyecto3','Tipo3'),
+('Proyecto4','Tipo4');
+
+INSERT INTO DETALLE_PROYECTO(id_per, id_proy)
+VALUES (3,3),
+       (4,4);
+
+select *
+from persona;
+
+CREATE OR REPLACE VIEW SEARCH AS
+select *
+from (SELECT CONCAT(per.nombre, ' ', per.apellido) AS NAME_AND_LASTNAME,
+             per.edad AS EDAD,
+             per.fecha_nac AS FECHA_DE_NACIMIENTO,
+             pro.nombre_Proy AS PROJECT_NAME
+      FROM persona as per
+               INNER JOIN departamento as dep ON per.id_dep = dep.id_dep
+               INNER JOIN detalle_proyecto as dp ON per.id_per = dp.id_per
+               INNER JOIN proyecto as pro ON dp.id_proy = pro.id_proyecto
+      WHERE per.sexo = 'F'
+        AND dep.nombre = 'EL ALTO'
+        AND per.fecha_nac = '2002-10-10') PDDPP;
+
+
+
+-- Pregunta 12
+
+ALTER TABLE proyecto ADD (ESTADO VARCHAR(30));
+
+INSERT INTO proyecto(NOMBRE_PROY, TIPO_PROY)
+VALUES ('EDUCACION PERSONAS ESPECIALES','EDUCACION'),
+       ('PLANTACION DE ARBOLES','FORESTACION'),
+       ('LOS AZTECAS','CULTURA');
+
+CREATE OR REPLACE TRIGGER UPDATE_TIP_PROY
+BEFORE UPDATE ON proyecto
+FOR EACH ROW
+    BEGIN
+        IF  NEW.tipo_Proy='EDUCACION'OR  NEW.tipo_Proy ='FORESTACION' OR  NEW.tipo_Proy= 'CULTURA'
+            THEN SET NEW.ESTADO='ACTIVO';
+        ELSE
+            SET NEW.ESTADO='INACTIVO';
+        END IF;
+    END;
+
+CREATE OR REPLACE TRIGGER ADD_TIP_PROY
+BEFORE  INSERT ON proyecto
+FOR EACH ROW
+    BEGIN
+        IF  new.tipo_Proy='EDUCACION'OR  new.tipo_Proy ='FORESTACION' OR  new.tipo_Proy= 'CULTURA'
+            THEN SET new.ESTADO='ACTIVO';
+        ELSE
+            SET new.ESTADO='INACTIVO';
+        END IF;
+    end;
+
+INSERT INTO proyecto(nombre_Proy, tipo_Proy)
+VALUES ('ARBOLESS','EDUCACION');
+
+SELECT * FROM proyecto;
+
+
+
+-- Pregunta 13 El trigger debe de llamarse calculaEdad.
+
+CREATE OR REPLACE TRIGGER calculaEdad
+BEFORE INSERT ON persona
+FOR EACH ROW
+    BEGIN
+        SET NEW.EDAD= TIMESTAMPDIFF(YEAR,NEW.FECHA_NAC,CURDATE());
+    end;
+drop table persona_2;
+INSERT INTO  persona(nombre, apellido, fecha_nac, email, id_dep, id_prov, sexo)
+VALUES  ('MARIA','GALARSA ORTEGA','1992-12-15','MARIA@GMAIL.COM',3,3,'F');
+INSERT INTO  persona(nombre, apellido, fecha_nac, email, id_dep, id_prov, sexo)
+VALUES ('JONATHAN','ALARCON GUTIERREZ', '2003-10-24', 'johnlag10@email', 4, 4, 'M');
+
+select *
+from persona;
+
+-- Pregunta 14
+
+CREATE TABLE PERSONA_2
+(
+  NOMBRE VARCHAR(20),
+  APELLIDOS VARCHAR(50),
+  FECHA_NAC DATE,
+  EDAD INT,
+  EMAIL VARCHAR(50),
+  ID_DEP INT NOT NULL ,
+  ID_PROV INT NOT NULL,
+  GENERO VARCHAR(1),
+  FOREIGN KEY (ID_PROV) REFERENCES  provincia(id_prov),
+  FOREIGN KEY (ID_DEP) REFERENCES departamento(id_dep)
+);
+
+CREATE OR REPLACE TRIGGER PERSONA_2
+BEFORE INSERT ON persona
+FOR EACH ROW
+    BEGIN
+        INSERT INTO PERSONA_2(NOMBRE, APELLIDOS, FECHA_NAC, EDAD, EMAIL, ID_DEP, ID_PROV, GENERO)
+        VALUES(NEW.NOMBRE,NEW.APELLIDO,NEW.FECHA_NAC,NEW.EDAD,NEW.EMAIL,NEW.ID_DEP,NEW.ID_PROV,NEW.SEXO);
+    end;
+
+INSERT INTO persona(nombre, apellido, fecha_nac, edad, email, id_dep, id_prov, sexo)
+VALUES ('PEDRO','ALIAGA ORTEGA','2000-12-15',22,'ALEJANDRA@GMAIL.COM',3,3,'M'),
+       ('ISSEI', 'HYODOU', '2001-10-14', 21, 'redragon00@gmail.com', 4, 4, 'M');
+
+SELECT * FROM PERSONA_2;
+
+
+-- Pregunta 15
+-- La consulta generada convertirlo a VISTA
+
+CREATE OR REPLACE VIEW BANKAI AS
+SELECT
+    CONCAT(per.nombre,per.apellido) AS NOMBRE_Y_APELLIDOS,
+    per.edad AS EDAD,
+    dep.nombre AS DEPARTAMENTO,
+    pvc.nombre AS PROVINCIA,
+    CONCAT(pro.nombre_Proy,': ',tipo_Proy) AS PROYECTO
+ FROM persona as per
+     INNER JOIN departamento as dep ON per.id_dep = dep.id_dep
+     INNER JOIN detalle_proyecto as dp ON per.id_per = dp.id_per
+     INNER JOIN proyecto as pro ON dp.id_proy = pro.id_proyecto
+     INNER JOIN provincia as pvc ON per.id_prov = pvc.id_prov;
+
+
+SELECT * FROM (BANKAI);
